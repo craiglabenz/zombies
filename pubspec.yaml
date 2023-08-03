@@ -1,6 +1,6 @@
 name: zombies
 description: "A new Flutter project."
-publish_to: "none" # Remove this line if you wish to publish to pub.dev
+publish_to: "none"
 
 version: 1.0.0+1
 
@@ -25,7 +25,8 @@ flutter:
 
   # To add assets to your application, add an assets section, like this:
   assets:
-    - assets/characters/
+    - assets/characters/Adventurer/Poses/
+    - assets/characters/Zombie/Poses/
     - assets/dungeon/
     - assets/town/
 
