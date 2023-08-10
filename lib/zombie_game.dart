@@ -6,13 +6,13 @@ import 'package:zombies/assets.dart';
 import 'components/components.dart';
 
 class ZombieGame extends FlameGame with HasKeyboardHandlerComponents {
-  ZombieGame() : _world = ZombieWorld() {
-    cameraComponent = CameraComponent(world: _world);
+  ZombieGame() : world = ZombieWorld() {
+    cameraComponent = CameraComponent(world: world);
     images.prefix = '';
   }
 
   late final CameraComponent cameraComponent;
-  final ZombieWorld _world;
+  final ZombieWorld world;
 
   @override
   Future<void> onLoad() async {
@@ -20,9 +20,6 @@ class ZombieGame extends FlameGame with HasKeyboardHandlerComponents {
       Assets.assets_characters_Adventurer_Poses_adventurer_action1_png,
       Assets.assets_town_tile_0000_png,
     ]);
-    cameraComponent.viewfinder.anchor = Anchor.center;
-    add(cameraComponent);
-    add(_world);
-    cameraComponent.follow(_world.player);
+    addAll([cameraComponent, world]);
   }
 }

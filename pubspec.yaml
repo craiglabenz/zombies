@@ -9,6 +9,7 @@ environment:
 
 dependencies:
   flame: ^1.8.1
+  flame_tiled: ^1.13.0
   flutter:
     sdk: flutter
 
@@ -28,6 +29,7 @@ flutter:
 
   # To add assets to your application, add an assets section, like this:
   assets:
+    - assets/tiles/world.tmx
     - assets/characters/Adventurer/Poses/
     - assets/characters/Zombie/Poses/
     - assets/dungeon/

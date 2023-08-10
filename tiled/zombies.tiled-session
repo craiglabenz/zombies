@@ -1,0 +1,56 @@
+{
+    "Map/SizeTest": {
+        "height": 4300,
+        "width": 2
+    },
+    "activeFile": "",
+    "expandedProjectPaths": [
+    ],
+    "fileStates": {
+        "": {
+            "scaleInDock": 1,
+            "scaleInEditor": 1
+        },
+        "#Land": {
+            "dynamicWrapping": false,
+            "scaleInDock": 1
+        },
+        "/Users/craiglabenz/Dev/git/craiglabenz/zombies/assets/tiles/world.tmx": {
+            "scale": 0.824125,
+            "selectedLayer": 0,
+            "viewCenter": {
+                "x": 302.13863188229936,
+                "y": 178.97770362505688
+            }
+        },
+        "/Users/craiglabenz/Dev/git/craiglabenz/zombies/assets/tiles/world.tmx#Land": {
+            "scaleInDock": 1
+        },
+        "/Users/craiglabenz/Dev/git/craiglabenz/zombies/assets/town/town.tsx": {
+            "dynamicWrapping": true,
+            "scaleInDock": 1,
+            "scaleInEditor": 1
+        }
+    },
+    "last.exportedFilePath": "/Users/craiglabenz/Dev/git/craiglabenz/zombies/assets/tiles",
+    "last.imagePath": "/Users/craiglabenz/Dev/git/craiglabenz/zombies/assets/town",
+    "map.height": 30,
+    "map.lastUsedExportFilter": "All Files (*)",
+    "map.tileHeight": 16,
+    "map.tileWidth": 16,
+    "map.width": 50,
+    "openFiles": [
+    ],
+    "project": "zombies.tiled-project",
+    "recentFiles": [
+        "/Users/craiglabenz/Dev/git/craiglabenz/zombies/assets/tiles/world.tmx",
+        "/Users/craiglabenz/Dev/git/craiglabenz/zombies/assets/town/town.tsx"
+    ],
+    "tileset.embedInMap": true,
+    "tileset.lastUsedFormat": "tsx",
+    "tileset.tileSize": {
+        "height": 16,
+        "width": 16
+    },
+    "tileset.type": 0
+}
