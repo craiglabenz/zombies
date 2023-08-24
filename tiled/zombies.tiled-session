@@ -13,14 +13,14 @@
         },
         "#Land": {
             "dynamicWrapping": false,
-            "scaleInDock": 1
+            "scaleInDock": 1.3694
         },
         "/Users/craiglabenz/Dev/git/craiglabenz/zombies/assets/tiles/world.tmx": {
             "scale": 0.824125,
             "selectedLayer": 0,
             "viewCenter": {
-                "x": 302.13863188229936,
-                "y": 178.97770362505688
+                "x": 400.42469285605944,
+                "y": 240.2548157136357
             }
         },
         "/Users/craiglabenz/Dev/git/craiglabenz/zombies/assets/tiles/world.tmx#Land": {
@@ -42,6 +42,7 @@
     "openFiles": [
     ],
     "project": "zombies.tiled-project",
+    "property.type": "bool",
     "recentFiles": [
         "/Users/craiglabenz/Dev/git/craiglabenz/zombies/assets/tiles/world.tmx",
         "/Users/craiglabenz/Dev/git/craiglabenz/zombies/assets/town/town.tsx"

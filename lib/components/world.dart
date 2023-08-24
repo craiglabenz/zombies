@@ -13,8 +13,9 @@ class ZombieWorld extends World with HasGameRef<ZombieGame> {
     map.tileMap.map.width * worldTileSize,
     map.tileMap.map.height * worldTileSize,
   );
-  final List<Land> land = [];
+  final unwalkableComponentEdges = <Line>[];
   late final Player player;
+  late final Zombie zombie;
 
   late TiledComponent map;
 
@@ -24,8 +25,37 @@ class ZombieWorld extends World with HasGameRef<ZombieGame> {
       'world.tmx',
       Vector2.all(worldTileSize),
     );
+
+    final objectLayer = map.tileMap.getLayer<ObjectGroup>('Objects')!;
+    for (final TiledObject object in objectLayer.objects) {
+      if (!object.isPolygon) continue;
+      if (!object.properties.byName.containsKey('blocksMovement')) return;
+      final vertices = <Vector2>[];
+      Vector2? lastPoint;
+      Vector2? nextPoint;
+      Vector2? firstPoint;
+      for (final point in object.polygon) {
+        nextPoint = Vector2((point.x + object.x) * worldScale,
+            (point.y + object.y) * worldScale);
+        firstPoint ??= nextPoint;
+        vertices.add(nextPoint);
+
+        // If there is a last point, or this is the end of the list, we have a
+        // line to add to our cached list of lines
+        if (lastPoint != null) {
+          unwalkableComponentEdges.add(Line(lastPoint, nextPoint));
+        }
+        lastPoint = nextPoint;
+      }
+      unwalkableComponentEdges.add(Line(lastPoint!, firstPoint!));
+      add(UnwalkableComponent(vertices));
+    }
+
+    zombie = Zombie(
+      position: Vector2(worldTileSize * 14.6, worldTileSize * 6.5),
+    );
     player = Player();
-    addAll([map, player]);
+    addAll([map, player, zombie]);
 
     // Set up Camera
     gameRef.cameraComponent.follow(player);
@@ -46,5 +76,17 @@ class ZombieWorld extends World with HasGameRef<ZombieGame> {
         size.y - gameSize.y / 2,
       ),
     );
+  }
+}
+
+class Line {
+  Line(this.start, this.end);
+  final Vector2 start;
+  final Vector2 end;
+
+  List<double> asList() => [start.x, start.y, end.x, end.y];
+
+  double get slope {
+    return end.y - start.y / end.x - start.x;
   }
 }
