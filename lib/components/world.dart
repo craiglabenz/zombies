@@ -2,6 +2,7 @@ import 'package:flame/components.dart';
 import 'package:flame/experimental.dart';
 import 'package:flame_tiled/flame_tiled.dart';
 import 'package:zombies/components/components.dart';
+import 'package:zombies/utilities/utilities.dart';
 
 import '../zombie_game.dart';
 import '../../constants.dart';
@@ -51,6 +52,10 @@ class ZombieWorld extends World with HasGameRef<ZombieGame> {
       add(UnwalkableComponent(vertices));
     }
 
+    for (final line in unwalkableComponentEdges) {
+      add(LineComponent.red(line: line, thickness: 3));
+    }
+
     zombie = Zombie(
       position: Vector2(worldTileSize * 14.6, worldTileSize * 6.5),
     );
@@ -76,17 +81,5 @@ class ZombieWorld extends World with HasGameRef<ZombieGame> {
         size.y - gameSize.y / 2,
       ),
     );
-  }
-}
-
-class Line {
-  Line(this.start, this.end);
-  final Vector2 start;
-  final Vector2 end;
-
-  List<double> asList() => [start.x, start.y, end.x, end.y];
-
-  double get slope {
-    return end.y - start.y / end.x - start.x;
   }
 }
