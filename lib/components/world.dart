@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'package:flame/components.dart';
 import 'package:flame/experimental.dart';
 import 'package:flame_tiled/flame_tiled.dart';
@@ -17,6 +19,7 @@ class ZombieWorld extends World with HasGameRef<ZombieGame> {
   final unwalkableComponentEdges = <Line>[];
   late final Player player;
   late final Zombie zombie;
+  final Random rnd = Random();
 
   late TiledComponent map;
 
@@ -61,6 +64,17 @@ class ZombieWorld extends World with HasGameRef<ZombieGame> {
     );
     player = Player();
     addAll([map, player, zombie]);
+
+    int zombiesToAdd = 15;
+    int counter = 0;
+    while (counter < zombiesToAdd) {
+      final x = rnd.nextInt(20) + 1;
+      final y = rnd.nextInt(20) + 1;
+      add(Zombie(
+        position: Vector2(worldTileSize * x, worldTileSize * y),
+      ));
+      counter++;
+    }
 
     // Set up Camera
     gameRef.cameraComponent.follow(player);
