@@ -59,17 +59,14 @@ class ZombieWorld extends World with HasGameRef<ZombieGame> {
       add(LineComponent.red(line: line, thickness: 3));
     }
 
-    zombie = Zombie(
-      position: Vector2(worldTileSize * 14.6, worldTileSize * 6.5),
-    );
     player = Player();
-    addAll([map, player, zombie]);
+    addAll([map, player]);
 
-    int zombiesToAdd = 15;
+    int zombiesToAdd = 12;
     int counter = 0;
     while (counter < zombiesToAdd) {
-      final x = rnd.nextInt(20) + 1;
-      final y = rnd.nextInt(20) + 1;
+      final x = rnd.nextInt(15) + 1;
+      final y = rnd.nextInt(15) + 1;
       add(Zombie(
         position: Vector2(worldTileSize * x, worldTileSize * y),
       ));

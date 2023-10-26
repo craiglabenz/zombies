@@ -121,7 +121,7 @@ class Zombie extends SpriteComponent
     wanderStartedAt = DateTime.now();
     wanderDeltaDeg ??= rnd.nextInt(maximumWanderDelta - minimumWanderDelta) +
         minimumWanderDelta;
-    wanderLength = Duration(milliseconds: 1500);
+    wanderLength = const Duration(milliseconds: 1500);
   }
 
   void wander(double dt) {
@@ -198,12 +198,25 @@ class Zombie extends SpriteComponent
 
   void applyMovement(Vector2 movement, double dt) {
     final originalPosition = position.clone();
-    final movementThisFrame = movement * speed * dt;
+    Vector2 movementThisFrame = movement * speed * dt;
+
+    // Fake update the position so our anchor calculations take into account
+    // what movement we want to do this turn.
     position.add(movementThisFrame);
-    checkMovement(
+
+    movementThisFrame = checkMovement(
       movementThisFrame: movementThisFrame,
       originalPosition: originalPosition,
+      predicate: isUnwalkableTerrain,
     );
+    movementThisFrame = checkMovement(
+      movementThisFrame: movementThisFrame,
+      originalPosition: originalPosition,
+      predicate: isZombie,
+      debug: debug,
+    );
+    position = originalPosition..add(movementThisFrame);
+    checkOutOfBounds();
   }
 
   double applyLurch(double speed) {

@@ -39,16 +39,18 @@ class Player extends SpriteComponent
     // Save this to use after we zero out movement for unwalkable terrain.
     final originalPosition = position.clone();
 
-    final movementThisFrame = movement * speed * dt;
+    Vector2 movementThisFrame = movement * speed * dt;
 
     // Fake update the position so our anchor calculations take into account
     // what movement we want to do this turn.
     position.add(movementThisFrame);
 
-    checkMovement(
+    movementThisFrame = checkMovement(
       movementThisFrame: movementThisFrame,
       originalPosition: originalPosition,
+      predicate: isUnwalkableTerrain,
     );
+    position = originalPosition..add(movementThisFrame);
   }
 
   @override
