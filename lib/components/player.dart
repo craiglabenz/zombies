@@ -27,11 +27,10 @@ class Player extends PositionComponent
   double speed = worldTileSize * 4;
   late SpriteAnimationComponent walkingAnimation;
   late SpriteComponent idleComponent;
-  late Sprite idleSprite;
 
   @override
   Future<void> onLoad() async {
-    idleSprite = Sprite(game.images.fromCache(
+    final idleSprite = Sprite(game.images.fromCache(
       Assets.assets_characters_Adventurer_Poses_adventurer_idle_png,
     ));
     idleComponent = SpriteComponent(

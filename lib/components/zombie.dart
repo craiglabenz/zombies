@@ -9,13 +9,15 @@ import 'package:zombies/constants.dart';
 import 'package:zombies/utilities/utilities.dart';
 import 'package:zombies/zombie_game.dart';
 
-enum ZombieState { wander, chase }
+enum ZombieGoalState { wander, chase }
 
-class Zombie extends SpriteComponent
+enum ZombieMovementState { standing, stepping }
+
+class Zombie extends PositionComponent
     with HasGameReference<ZombieGame>, UnwalkableTerrainChecker {
   Zombie({
     required super.position,
-    this.speed = worldTileSize * 4,
+    this.speed = worldTileSize * 2,
     this.debug = false,
   }) : super(
           size: Vector2.all(64),
@@ -27,7 +29,8 @@ class Zombie extends SpriteComponent
   LineComponent? visualizedPathToPlayer;
   bool debug;
   final double maximumFollowDistance = worldTileSize * 10;
-  late ZombieState state;
+  late ZombieGoalState goalState;
+  ZombieMovementState movementState = ZombieMovementState.standing;
 
   Random rnd = Random();
 
@@ -41,34 +44,73 @@ class Zombie extends SpriteComponent
   late DateTime veerStartedAt;
   late bool clockWiseVeerFirst;
 
-  static const minimumLurchDurationMs = 300;
-  static const maximumLurchDurationMs = 1500;
-  late Duration lurchDuration;
+  static const maximumStandingLurchDurationMs = 900;
+  static const minimumStandingLurchDurationMs = 200;
+
+  static const maximumSteppingLurchDurationMs = 1500;
+  static const minimumSteppingLurchDurationMs = 300;
+  // late Curve lurchCurve;
   late DateTime lurchStartedAt;
-  late Curve lurchCurve;
+  late Duration lurchDuration;
 
   static const minimumWanderDelta = -3;
   static const maximumWanderDelta = 3;
   int? wanderDeltaDeg;
   DateTime? wanderStartedAt;
 
+  late SpriteAnimationComponent walkingAnimation;
+  late SpriteComponent idleComponent;
+
   /// Amount of time to follow a given wander path before resetting
   Duration? wanderLength;
 
-  final curves = <Curve>[
-    Curves.easeIn,
-    Curves.easeInBack,
-    Curves.easeInOut,
-    Curves.easeInOutBack,
-  ];
+  static const defaultWalkingStepTime = 0.3;
+
+  Duration getStandingLurchDuration() => Duration(
+        milliseconds: Random().nextInt(maximumStandingLurchDurationMs -
+                minimumStandingLurchDurationMs) +
+            minimumStandingLurchDurationMs,
+      );
+
+  Duration getStepLurchDuration() => Duration(
+        milliseconds: Random().nextInt(maximumSteppingLurchDurationMs -
+                minimumSteppingLurchDurationMs) +
+            minimumSteppingLurchDurationMs,
+      );
 
   @override
   void onLoad() {
-    sprite = Sprite(game.images.fromCache(
-      Assets.assets_characters_Zombie_Poses_zombie_cheer1_png,
+    lurchStartedAt = DateTime.now();
+    lurchDuration = getStandingLurchDuration();
+    final idleSprite = Sprite(game.images.fromCache(
+      Assets.assets_characters_Zombie_Poses_zombie_idle_png,
     ));
+    idleComponent = SpriteComponent(
+      sprite: idleSprite,
+      size: Vector2.all(64.0),
+    );
+
+    final animation = SpriteAnimation.spriteList(
+      [
+        Sprite(
+          game.images.fromCache(
+            Assets.assets_characters_Zombie_Poses_zombie_walk1_png,
+          ),
+        ),
+        Sprite(
+          game.images.fromCache(
+            Assets.assets_characters_Zombie_Poses_zombie_walk2_png,
+          ),
+        ),
+      ],
+      stepTime: defaultWalkingStepTime,
+    );
+    walkingAnimation = SpriteAnimationComponent(
+      animation: animation,
+      size: Vector2.all(64.0),
+    );
+    add(idleComponent);
     setVeer();
-    setLurch();
     setStateToWander();
   }
 
@@ -81,25 +123,14 @@ class Zombie extends SpriteComponent
     clockWiseVeerFirst = rnd.nextBool();
   }
 
-  void setLurch() {
-    lurchStartedAt = DateTime.now();
-    lurchDuration = Duration(
-      milliseconds:
-          rnd.nextInt(maximumLurchDurationMs - minimumLurchDurationMs) +
-              minimumLurchDurationMs,
-    );
-    curves.shuffle();
-    lurchCurve = curves.first;
-  }
-
   @override
   void update(double dt) {
     updateState();
     final pathToPlayer = Line(position, game.world.player.position);
-    switch (state) {
-      case (ZombieState.wander):
+    switch (goalState) {
+      case (ZombieGoalState.wander):
         wander(dt);
-      case (ZombieState.chase):
+      case (ZombieGoalState.chase):
         chase(pathToPlayer, dt);
     }
   }
@@ -107,16 +138,16 @@ class Zombie extends SpriteComponent
   void updateState() {
     final pathToPlayer = Line(position, game.world.player.position);
     if (pathToPlayer.length > maximumFollowDistance) {
-      if (state != ZombieState.wander) {
+      if (goalState != ZombieGoalState.wander) {
         setStateToWander();
       }
     } else {
-      state = ZombieState.chase;
+      goalState = ZombieGoalState.chase;
     }
   }
 
   void setStateToWander() {
-    state = ZombieState.wander;
+    goalState = ZombieGoalState.wander;
     wanderPath = getRandomWanderPath();
     wanderStartedAt = DateTime.now();
     wanderDeltaDeg ??= rnd.nextInt(maximumWanderDelta - minimumWanderDelta) +
@@ -220,15 +251,25 @@ class Zombie extends SpriteComponent
   }
 
   double applyLurch(double speed) {
-    double percentLurched =
-        DateTime.now().difference(lurchStartedAt).inMilliseconds /
-            lurchDuration.inMilliseconds;
-    if (percentLurched > 1.0) {
-      setLurch();
-      percentLurched = 0;
+    if (movementState == ZombieMovementState.standing) {
+      if (DateTime.now().difference(lurchStartedAt) > lurchDuration) {
+        movementState = ZombieMovementState.stepping;
+        remove(idleComponent);
+        add(walkingAnimation);
+        lurchStartedAt = DateTime.now();
+        lurchDuration = getStepLurchDuration();
+      }
+      return 0;
+    } else {
+      if (DateTime.now().difference(lurchStartedAt) > lurchDuration) {
+        remove(walkingAnimation);
+        add(idleComponent);
+        movementState = ZombieMovementState.standing;
+        lurchStartedAt = DateTime.now();
+        lurchDuration = getStandingLurchDuration();
+      }
+      return speed;
     }
-    percentLurched = Curves.easeIn.transform(percentLurched);
-    return percentLurched * speed;
   }
 
   Line? _getUnwalkableCollision(pathToPlayer) {
