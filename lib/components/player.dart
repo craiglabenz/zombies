@@ -2,12 +2,11 @@ import 'package:flame/components.dart';
 import 'package:flame/experimental.dart';
 import 'package:flutter/services.dart';
 import 'package:zombies/assets.dart';
-import 'package:zombies/components/components.dart';
 import 'package:zombies/utilities/utilities.dart';
 import 'package:zombies/constants.dart';
 import 'package:zombies/zombie_game.dart';
 
-class Player extends SpriteComponent
+class Player extends PositionComponent
     with
         KeyboardHandler,
         HasGameReference<ZombieGame>,
@@ -26,12 +25,40 @@ class Player extends SpriteComponent
   late Vector2 maxPosition = game.world.size - halfSize;
   Vector2 movement = Vector2.zero();
   double speed = worldTileSize * 4;
+  late SpriteAnimationComponent walkingAnimation;
+  late SpriteComponent idleComponent;
+  late Sprite idleSprite;
 
   @override
-  void onLoad() {
-    sprite = Sprite(game.images.fromCache(
-      Assets.assets_characters_Adventurer_Poses_adventurer_action1_png,
+  Future<void> onLoad() async {
+    idleSprite = Sprite(game.images.fromCache(
+      Assets.assets_characters_Adventurer_Poses_adventurer_idle_png,
     ));
+    idleComponent = SpriteComponent(
+      sprite: idleSprite,
+      size: Vector2.all(64.0),
+    );
+
+    final animation = SpriteAnimation.spriteList(
+      [
+        Sprite(
+          game.images.fromCache(
+            Assets.assets_characters_Adventurer_Poses_adventurer_walk1_png,
+          ),
+        ),
+        Sprite(
+          game.images.fromCache(
+            Assets.assets_characters_Adventurer_Poses_adventurer_walk2_png,
+          ),
+        ),
+      ],
+      stepTime: 0.15,
+    );
+    walkingAnimation = SpriteAnimationComponent(
+      animation: animation,
+      size: Vector2.all(64.0),
+    );
+    add(idleComponent);
   }
 
   @override
@@ -51,6 +78,22 @@ class Player extends SpriteComponent
       predicate: isUnwalkableTerrain,
     );
     position = originalPosition..add(movementThisFrame);
+
+    if (movementThisFrame.length2 == 0) {
+      if (children.contains(walkingAnimation)) {
+        remove(walkingAnimation);
+      }
+      if (!children.contains(idleComponent)) {
+        add(idleComponent);
+      }
+    } else {
+      if (!children.contains(walkingAnimation)) {
+        add(walkingAnimation);
+      }
+      if (children.contains(idleComponent)) {
+        remove(idleComponent);
+      }
+    }
   }
 
   @override
