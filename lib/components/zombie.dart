@@ -1,5 +1,6 @@
 import 'dart:math';
 
+import 'package:flame/collisions.dart';
 import 'package:flame/components.dart';
 import 'package:flame/experimental.dart';
 import 'package:flutter/animation.dart';
@@ -14,7 +15,10 @@ enum ZombieGoalState { wander, chase }
 enum ZombieMovementState { standing, stepping }
 
 class Zombie extends PositionComponent
-    with HasGameReference<ZombieGame>, UnwalkableTerrainChecker {
+    with
+        HasGameReference<ZombieGame>,
+        UnwalkableTerrainChecker,
+        CollisionCallbacks {
   Zombie({
     required super.position,
     this.speed = worldTileSize * 2,
@@ -23,6 +27,7 @@ class Zombie extends PositionComponent
           size: Vector2.all(64),
           anchor: Anchor.center,
           priority: 1,
+          children: [CircleHitbox()],
         );
 
   double speed;
@@ -114,6 +119,22 @@ class Zombie extends PositionComponent
     setStateToWander();
   }
 
+  @override
+  void onCollisionStart(
+      Set<Vector2> intersectionPoints, PositionComponent other) {
+    cleanUpMovement(
+      collidingComponent: other,
+      intersectionPoints: intersectionPoints,
+      predicate: isZombie,
+    );
+    cleanUpMovement(
+      collidingComponent: other,
+      intersectionPoints: intersectionPoints,
+      predicate: isUnwalkableTerrain,
+    );
+    super.onCollisionStart(intersectionPoints, other);
+  }
+
   void setVeer() {
     veerStartedAt = DateTime.now();
     veerDuration = Duration(
@@ -125,6 +146,7 @@ class Zombie extends PositionComponent
 
   @override
   void update(double dt) {
+    lastPosition.setFrom(position);
     updateState();
     final pathToPlayer = Line(position, game.world.player.position);
     switch (goalState) {
@@ -133,6 +155,9 @@ class Zombie extends PositionComponent
       case (ZombieGoalState.chase):
         chase(pathToPlayer, dt);
     }
+    cachedMovementThisFrame
+      ..setFrom(position)
+      ..sub(lastPosition);
   }
 
   void updateState() {
@@ -209,19 +234,19 @@ class Zombie extends PositionComponent
   }
 
   void moveAlongPath(Line pathToPlayer, double dt) {
-    Line? collision = _getUnwalkableCollision(pathToPlayer);
+    // Line? collision = _getUnwalkableCollision(pathToPlayer);
 
-    if (collision != null) {
-      final distanceToStart =
-          Line(game.world.player.position, collision.start).length2;
-      final distanceToEnd =
-          Line(game.world.player.position, collision.end).length2;
-      if (distanceToStart < distanceToEnd) {
-        pathToPlayer = Line(position, collision.start).extend(1.5);
-      } else {
-        pathToPlayer = Line(position, collision.end).extend(1.5);
-      }
-    }
+    // if (collision != null) {
+    //   final distanceToStart =
+    //       Line(game.world.player.position, collision.start).length2;
+    //   final distanceToEnd =
+    //       Line(game.world.player.position, collision.end).length2;
+    //   if (distanceToStart < distanceToEnd) {
+    //     pathToPlayer = Line(position, collision.start).extend(1.5);
+    //   } else {
+    //     pathToPlayer = Line(position, collision.end).extend(1.5);
+    //   }
+    // }
 
     final movement = pathToPlayer.vector2.normalized();
     applyMovement(movement, applyLurch(dt));
@@ -235,17 +260,15 @@ class Zombie extends PositionComponent
     // what movement we want to do this turn.
     position.add(movementThisFrame);
 
-    movementThisFrame = checkMovement(
-      movementThisFrame: movementThisFrame,
-      originalPosition: originalPosition,
-      predicate: isUnwalkableTerrain,
-    );
-    movementThisFrame = checkMovement(
-      movementThisFrame: movementThisFrame,
-      originalPosition: originalPosition,
-      predicate: isZombie,
-      debug: debug,
-    );
+    // movementThisFrame = checkMovement(
+    //   movementThisFrame: movementThisFrame,
+    //   predicate: isUnwalkableTerrain,
+    // );
+    // movementThisFrame = checkMovement(
+    //   movementThisFrame: movementThisFrame,
+    //   predicate: isZombie,
+    //   debug: debug,
+    // );
     position = originalPosition..add(movementThisFrame);
     checkOutOfBounds();
   }
@@ -272,7 +295,7 @@ class Zombie extends PositionComponent
     }
   }
 
-  Line? _getUnwalkableCollision(pathToPlayer) {
+  Line? _getUnwalkableCollision(Line pathToPlayer) {
     Vector2? nearestIntersection;
     double? shortestLength;
     Line? unwalkableBoundary;

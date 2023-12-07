@@ -10,9 +10,46 @@ bool isZombie(Component component) => component is Zombie;
 
 mixin UnwalkableTerrainChecker
     on PositionComponent, HasGameReference<ZombieGame> {
+  final Vector2 lastPosition = Vector2.zero();
+  final Vector2 cachedMovementThisFrame = Vector2.zero();
+
+  /// If collision detection reports that this Component has collided with another
+  /// Component that would invalidate this Component's movement this frame, we
+  /// use cached values to undo the invalid portion of this frame's movement.
+  void cleanUpMovement({
+    required Component collidingComponent,
+    required Set<Vector2> intersectionPoints,
+    required bool Function(Component) predicate,
+  }) {
+    if (!predicate(collidingComponent)) {
+      return;
+    }
+    // if (movementThisFrame.y < 0) {
+    //   // Moving up
+    //   if (intersecting on top) {
+    //     position.y = lastPosition.y;
+    //   }
+    // }
+    // if (movementThisFrame.y > 0) {
+    //   // Moving down
+    //   if (intersecting on bottom) {
+    //     position.y = lastPosition.y;
+    //   }
+    // }
+    if (cachedMovementThisFrame.x != 0) {
+      // Moving left or right
+      // commented to see zombies move - obviously uncomment
+      // position.x = lastPosition.x;
+    }
+    if (cachedMovementThisFrame.y != 0) {
+      // Moving up
+      // commented to see zombies move - obviously uncomment
+      // position.y = lastPosition.y;
+    }
+  }
+
   Vector2 checkMovement({
     required Vector2 movementThisFrame,
-    required Vector2 originalPosition,
     required bool Function(Component) predicate,
     bool debug = false,
   }) {

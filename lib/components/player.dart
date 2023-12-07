@@ -1,3 +1,4 @@
+import 'package:flame/collisions.dart';
 import 'package:flame/components.dart';
 import 'package:flame/experimental.dart';
 import 'package:flutter/services.dart';
@@ -10,13 +11,15 @@ class Player extends PositionComponent
     with
         KeyboardHandler,
         HasGameReference<ZombieGame>,
-        UnwalkableTerrainChecker {
+        UnwalkableTerrainChecker,
+        CollisionCallbacks {
   Player()
       : super(
-          position: Vector2(worldTileSize * 9.6, worldTileSize * 2.5),
-          size: Vector2.all(64),
           anchor: Anchor.center,
+          children: [RectangleHitbox()],
+          position: Vector2(worldTileSize * 9.6, worldTileSize * 2.5),
           priority: 1,
+          size: Vector2.all(64),
         ) {
     halfSize = size / 2;
   }
@@ -61,7 +64,18 @@ class Player extends PositionComponent
   }
 
   @override
+  void onCollision(Set<Vector2> intersectionPoints, PositionComponent other) {
+    cleanUpMovement(
+      collidingComponent: other,
+      intersectionPoints: intersectionPoints,
+      predicate: isUnwalkableTerrain,
+    );
+    super.onCollision(intersectionPoints, other);
+  }
+
+  @override
   void update(double dt) {
+    lastPosition.setFrom(position);
     // Save this to use after we zero out movement for unwalkable terrain.
     final originalPosition = position.clone();
 
@@ -71,11 +85,10 @@ class Player extends PositionComponent
     // what movement we want to do this turn.
     position.add(movementThisFrame);
 
-    movementThisFrame = checkMovement(
-      movementThisFrame: movementThisFrame,
-      originalPosition: originalPosition,
-      predicate: isUnwalkableTerrain,
-    );
+    // movementThisFrame = checkMovement(
+    //   movementThisFrame: movementThisFrame,
+    //   predicate: isUnwalkableTerrain,
+    // );
     position = originalPosition..add(movementThisFrame);
 
     if (movementThisFrame.length2 == 0) {
@@ -93,6 +106,9 @@ class Player extends PositionComponent
         remove(idleComponent);
       }
     }
+    cachedMovementThisFrame
+      ..setFrom(position)
+      ..sub(lastPosition);
   }
 
   @override

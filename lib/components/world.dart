@@ -9,7 +9,8 @@ import 'package:zombies/utilities/utilities.dart';
 import '../zombie_game.dart';
 import '../../constants.dart';
 
-class ZombieWorld extends World with HasGameRef<ZombieGame> {
+class ZombieWorld extends World
+    with HasGameRef<ZombieGame>, HasCollisionDetection {
   ZombieWorld({super.children});
 
   late Vector2 size = Vector2(
@@ -55,18 +56,18 @@ class ZombieWorld extends World with HasGameRef<ZombieGame> {
       add(UnwalkableComponent(vertices));
     }
 
-    for (final line in unwalkableComponentEdges) {
-      add(LineComponent.red(line: line, thickness: 3));
-    }
+    // for (final line in unwalkableComponentEdges) {
+    //   add(LineComponent.red(line: line, thickness: 3));
+    // }
 
     player = Player();
     addAll([map, player]);
 
-    int zombiesToAdd = 12;
+    int zombiesToAdd = 100;
     int counter = 0;
     while (counter < zombiesToAdd) {
-      final x = rnd.nextInt(15) + 1;
-      final y = rnd.nextInt(15) + 1;
+      final x = rnd.nextInt(8) + 1;
+      final y = rnd.nextInt(8) + 1;
       add(Zombie(
         position: Vector2(worldTileSize * x, worldTileSize * y),
       ));
@@ -75,6 +76,7 @@ class ZombieWorld extends World with HasGameRef<ZombieGame> {
 
     // Set up Camera
     gameRef.cameraComponent.follow(player);
+    gameRef.cameraComponent.viewport.add(FpsTextComponent());
   }
 
   @override
