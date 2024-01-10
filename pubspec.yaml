@@ -9,7 +9,8 @@ environment:
 
 dependencies:
   equatable: ^2.0.5
-  flame: ^1.8.1
+  flame: ^1.13.0
+  flame_behaviors: ^1.0.0
   flame_tiled: ^1.13.0
   flutter:
     sdk: flutter
