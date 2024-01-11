@@ -34,8 +34,11 @@ class GoalControllingBehavior extends Behavior<Zombie>
 
 enum ZombieMovementState { standing, stepping }
 
-class ChasingBehavior extends Behavior<Zombie>
-    with HasGameRef<ZombieGame>, PathFindingBehavior {
+class ChasingBehavior extends Behavior<Zombie> with PathFindingBehavior {
+  ChasingBehavior() {
+    priority = Priority.pathFinding;
+  }
+
   /// The maximum angle to the left (and/or right) the zombie will veer between.
   static const maxVeerDeg = 45;
   static const minimumVeerDurationMs = 3000;
@@ -57,37 +60,94 @@ class ChasingBehavior extends Behavior<Zombie>
 
   @override
   void update(double dt) {
-    chase(dt);
+    // chase(dt);
+    _debugPathfinding();
     super.update(dt);
   }
 
   @override
   void onLoad() {
+    parent.useStandingAnimation(onLoad: true);
     lurchStartedAt = DateTime.now();
     lurchDuration = getStandingLurchDuration();
     setVeer();
     super.onLoad();
   }
 
-  void chase(double dt) {
-    final pathToPlayer = Line(parent.position, game.world.player.position);
-    final pathToTake = applyVeerToPath(pathToPlayer);
-    movementToMake = applyLurch(pathToTake.vector2);
-    print('movementToMake: $movementToMake');
-    parent.applyMovement(movementToMake * dt);
-    // _debugPathfinding(pathToTake);
-    // moveAlongPath(pathToTake, dt);
+  ZombieWorld get world => parent.game.world;
+
+  @override
+  Vector2 get movementToMake {
+    return movementToMakeRaw.normalized();
   }
 
-  // void _debugPathfinding(Line pathToPlayer) {
-  //   if (!debug) return;
-  //   if (visualizedPathToPlayer == null) {
-  //     visualizedPathToPlayer = LineComponent.blue(line: pathToPlayer);
-  //     game.world.add(visualizedPathToPlayer!);
-  //   } else {
-  //     visualizedPathToPlayer!.line = pathToPlayer;
-  //   }
-  // }
+  Vector2 get movementToMakeRaw {
+    Line pathToTake = Line(parent.position, world.player.position);
+    Line? unwalkableTerrainBoundary = getUnwalkableCollision(pathToTake);
+    if (unwalkableTerrainBoundary != null) {
+      pathToTake = avoidCollision(unwalkableTerrainBoundary);
+    }
+    pathToTake = applyVeerToPath(pathToTake);
+    pathToTake = applyLurch(pathToTake);
+    return pathToTake.vector2;
+  }
+
+  Line avoidCollision(Line collidingLine) {
+    final startToPlayer = Line(collidingLine.start, world.player.position);
+
+    final endToPlayer = Line(collidingLine.end, world.player.position);
+    if (startToPlayer.length2 < endToPlayer.length2) {
+      return Line(parent.position, collidingLine.start).extend(1.5);
+    } else {
+      return Line(parent.position, collidingLine.end).extend(1.5);
+    }
+  }
+
+  /// Checks whether the given Line intersects any [UnwalkableTerrain].
+  Line? getUnwalkableCollision(Line pathToPlayer) {
+    Vector2? nearestIntersection;
+    double? shortestLength;
+    Line? unwalkableBoundary;
+    for (final line in world.unwalkableComponentEdges) {
+      Vector2? intersection = pathToPlayer.intersectsAt(line);
+      if (intersection != null) {
+        if (nearestIntersection == null) {
+          nearestIntersection = intersection;
+          shortestLength = Line(parent.position, intersection).length2;
+          unwalkableBoundary = line;
+        } else {
+          final lengthToThisPoint = Line(parent.position, intersection).length2;
+          if (lengthToThisPoint < shortestLength!) {
+            shortestLength = lengthToThisPoint;
+            nearestIntersection = intersection;
+            unwalkableBoundary = line;
+          }
+        }
+      }
+    }
+    return unwalkableBoundary;
+  }
+
+  void _debugPathfinding() {
+    final movementToRender = movementToMakeRaw;
+    if (!parent.debug || movementToRender.length2 == 0) {
+      if (parent.visualizedPathToPlayer != null) {
+        parent.visualizedPathToPlayer!.clean();
+        parent.visualizedPathToPlayer = null;
+      }
+      return;
+    }
+    final pathToPlayer = Line(
+      parent.position,
+      parent.position.clone()..add(movementToRender),
+    );
+    if (parent.visualizedPathToPlayer == null) {
+      parent.visualizedPathToPlayer = LineComponent.blue(line: pathToPlayer);
+      world.add(parent.visualizedPathToPlayer!);
+    } else {
+      parent.visualizedPathToPlayer!.line = pathToPlayer;
+    }
+  }
 
   Line applyVeerToPath(Line path) {
     // Percentage into the total veer we currently are
@@ -131,7 +191,7 @@ class ChasingBehavior extends Behavior<Zombie>
     clockWiseVeerFirst = Random().nextBool();
   }
 
-  Vector2 applyLurch(Vector2 movement) {
+  Line applyLurch(Line pathToTake) {
     if (movementState == ZombieMovementState.standing) {
       if (DateTime.now().difference(lurchStartedAt) > lurchDuration) {
         movementState = ZombieMovementState.stepping;
@@ -139,7 +199,7 @@ class ChasingBehavior extends Behavior<Zombie>
         lurchStartedAt = DateTime.now();
         lurchDuration = getStepLurchDuration();
       }
-      return Vector2.zero();
+      return Line(pathToTake.start, pathToTake.start);
     } else {
       if (DateTime.now().difference(lurchStartedAt) > lurchDuration) {
         parent.useStandingAnimation();
@@ -148,7 +208,7 @@ class ChasingBehavior extends Behavior<Zombie>
         lurchStartedAt = DateTime.now();
         lurchDuration = getStandingLurchDuration();
       }
-      return movement;
+      return pathToTake;
     }
   }
 
@@ -165,8 +225,12 @@ class ChasingBehavior extends Behavior<Zombie>
       );
 }
 
-class WanderingBehavior extends Behavior<Zombie>
-    with HasGameRef<ZombieGame>, PathFindingBehavior {
+class WanderingBehavior extends Behavior<Zombie> with PathFindingBehavior {
+  WanderingBehavior() {
+    priority = Priority.pathFinding;
+    initializeWanderingState();
+  }
+
   /// Amount of time to follow a given wander path before resetting
   Duration? wanderLength;
   Vector2? wanderPath;
@@ -175,25 +239,15 @@ class WanderingBehavior extends Behavior<Zombie>
   int? wanderDeltaDeg;
   DateTime? wanderStartedAt;
 
-  @override
-  void update(double dt) {
-    wander(dt);
-    super.update(dt);
-  }
+  ZombieWorld get world => parent.game.world;
 
   @override
-  void onMount() {
-    initializeWanderingState();
-    super.onMount();
-  }
-
-  void wander(double dt) {
+  Vector2 get movementToMake {
     if (DateTime.now().difference(wanderStartedAt!) > wanderLength!) {
       initializeWanderingState();
     }
     wanderPath = wanderPath!..rotate(wanderDeltaDeg! * degrees2Radians);
-    movementToMake = wanderPath!.normalized();
-    // applyMovement(wanderPath!, applyLurch(dt / 2));
+    return wanderPath!.normalized();
   }
 
   void initializeWanderingState() {

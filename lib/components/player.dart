@@ -1,6 +1,5 @@
 import 'package:flame/collisions.dart';
 import 'package:flame/components.dart';
-import 'package:flame/experimental.dart';
 import 'package:flutter/services.dart';
 import 'package:zombies/assets.dart';
 import 'package:zombies/utilities/utilities.dart';
@@ -109,11 +108,20 @@ class Player extends PositionComponent
     cachedMovementThisFrame
       ..setFrom(position)
       ..sub(lastPosition);
+    checkOutOfBounds();
   }
 
   @override
   bool onKeyEvent(RawKeyEvent event, Set<LogicalKeyboardKey> keysPressed) {
     if (event is RawKeyDownEvent) {
+      if (event.logicalKey == LogicalKeyboardKey.enter) {
+        game.world.isPaused = false;
+        return false;
+      }
+      if (event.logicalKey == LogicalKeyboardKey.space) {
+        game.world.isPausing = !game.world.isPausing;
+        return false;
+      }
       if (event.logicalKey == LogicalKeyboardKey.keyW) {
         movement = Vector2(movement.x, -1);
       }

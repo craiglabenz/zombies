@@ -1,5 +1,4 @@
 import 'package:flame/components.dart';
-import 'package:flame/experimental.dart';
 import 'package:zombies/components/components.dart';
 import 'package:zombies/zombie_game.dart';
 
@@ -24,6 +23,20 @@ mixin UnwalkableTerrainChecker
     if (!predicate(collidingComponent)) {
       return;
     }
+
+    // final Vector2 avg = intersectionPoints.average();
+    // pathToCollision.x = avg.x - position.x;
+    // pathToCollision.y = avg.y - position.y;
+
+    // bool movingTowardCollisionInX =
+    //     pathToCollision.x > 0 == cachedMovementThisFrame.x > 0;
+    // bool movingTowardCollisionInY =
+    //     pathToCollision.y > 0 == cachedMovementThisFrame.y > 0;
+
+    // if (movingTowardCollisionInY) {
+    //   position.y = cached
+    // }
+
     // if (movementThisFrame.y < 0) {
     //   // Moving up
     //   if (intersecting on top) {

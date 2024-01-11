@@ -2,6 +2,7 @@ import 'dart:math';
 import 'package:equatable/equatable.dart';
 import 'package:vector_math/vector_math_64.dart';
 
+// ignore: must_be_immutable
 class Line extends Equatable {
   Line(this.start, this.end);
 
@@ -12,6 +13,12 @@ class Line extends Equatable {
     double endY,
   ) =>
       Line(Vector2(startX, startY), Vector2(endX, endY));
+
+  factory Line.fromPosition({
+    required Vector2 startingPosition,
+    required Vector2 delta,
+  }) =>
+      Line(startingPosition, startingPosition + delta);
 
   final Vector2 start;
   final Vector2 end;
@@ -57,7 +64,15 @@ class Line extends Equatable {
   }
 
   double get angle => atan2(dy, dx);
-  double get angleDeg => angle * radians2Degrees;
+  double get angleDeg {
+    double deg = angle * radians2Degrees;
+    while (deg < 0) {
+      deg += 360;
+    }
+    return deg;
+  }
+
+  Direction get direction => angleDeg.angleDirection;
 
   Line copy() => Line.doubles(start.x, start.y, end.x, end.y);
 
@@ -77,5 +92,26 @@ class Line extends Equatable {
       return Vector2(start.x + (t * dx), start.y + (t * dy));
     }
     return null;
+  }
+}
+
+enum Direction { up, down, left, right }
+
+extension DirectionDouble on double {
+  Direction get angleDirection {
+    // 0° is straight to the right, not up, like feels easier to reason about.
+    // So, add 90° from the value to convert from actural coordinates to
+    // "natural" (to me) coordinates.
+    double natural = this + 90;
+
+    // Now compute.
+    if (natural > 45.0 && natural <= 135.0) {
+      return Direction.right;
+    } else if (natural > 135.0 && natural <= 225.0) {
+      return Direction.down;
+    } else if (natural > 225.0 && natural <= 315.0) {
+      return Direction.left;
+    }
+    return Direction.up;
   }
 }

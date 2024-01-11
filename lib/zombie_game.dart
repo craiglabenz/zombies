@@ -12,6 +12,8 @@ class ZombieGame extends FlameGame with HasKeyboardHandlerComponents {
   }
 
   late final CameraComponent cameraComponent;
+
+  @override
   final ZombieWorld world;
 
   @override

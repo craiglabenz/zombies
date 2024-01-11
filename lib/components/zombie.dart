@@ -23,20 +23,23 @@ class Zombie extends PositionedEntity
           size: Vector2.all(64),
           anchor: Anchor.center,
           priority: 1,
-          children: [CircleHitbox()],
-          behaviors: [GoalControllingBehavior()],
+          children: [CircleHitbox.relative(0.8, parentSize: Vector2.all(64))],
+          behaviors: [GoalControllingBehavior(), ZombieMovingBehavior()],
         );
 
   late ZombieGoalState goalState;
 
   double speed;
   LineComponent? visualizedPathToPlayer;
+  LineComponent? visualizedPathToCollision;
   bool debug;
 
   Random rnd = Random();
 
   late SpriteAnimationComponent walkingAnimation;
   late SpriteComponent idleComponent;
+
+  late PathFindingBehavior pathFinding;
 
   static const defaultWalkingStepTime = 0.3;
 
@@ -45,8 +48,11 @@ class Zombie extends PositionedEntity
     add(walkingAnimation);
   }
 
-  void useStandingAnimation() {
-    remove(walkingAnimation);
+  void useStandingAnimation({bool onLoad = false}) {
+    // On the first call, there isn't yet a walking animation to remove
+    if (!onLoad) {
+      remove(walkingAnimation);
+    }
     add(idleComponent);
   }
 
@@ -82,12 +88,22 @@ class Zombie extends PositionedEntity
     add(idleComponent);
   }
 
+  @override
+  void onCollision(Set<Vector2> intersectionPoints, PositionComponent other) {
+    super.onCollision(intersectionPoints, other);
+    findBehavior<ZombieMovingBehavior>().undoCollisions(
+      other: other,
+      intersectionPoints: intersectionPoints,
+    );
+  }
+
   void setStateToWandering() {
     if (hasBehavior<ChasingBehavior>()) {
       remove(findBehavior<ChasingBehavior>());
     }
     if (!hasBehavior<WanderingBehavior>()) {
-      add(WanderingBehavior());
+      pathFinding = WanderingBehavior();
+      add(pathFinding);
     }
   }
 
@@ -96,103 +112,8 @@ class Zombie extends PositionedEntity
       remove(findBehavior<WanderingBehavior>());
     }
     if (!hasBehavior<ChasingBehavior>()) {
-      add(ChasingBehavior());
+      pathFinding = ChasingBehavior();
+      add(pathFinding);
     }
-  }
-
-  @override
-  void onCollisionStart(
-      Set<Vector2> intersectionPoints, PositionComponent other) {
-    cleanUpMovement(
-      collidingComponent: other,
-      intersectionPoints: intersectionPoints,
-      predicate: isZombie,
-    );
-    cleanUpMovement(
-      collidingComponent: other,
-      intersectionPoints: intersectionPoints,
-      predicate: isUnwalkableTerrain,
-    );
-    super.onCollisionStart(intersectionPoints, other);
-  }
-
-  @override
-  void update(double dt) {
-    lastPosition.setFrom(position);
-
-    // final goalState = findBehavior<GoalControllingBehavior>().goalState;
-    // switch (goalState) {
-    //   case (ZombieGoalState.wander):
-    //     wander(dt);
-    //   case (ZombieGoalState.chase):
-    //     chase(pathToPlayer, dt);
-    // }
-    cachedMovementThisFrame
-      ..setFrom(position)
-      ..sub(lastPosition);
-  }
-
-  // void moveAlongPath(Line pathToPlayer, double dt) {
-  //   // Line? collision = _getUnwalkableCollision(pathToPlayer);
-
-  //   // if (collision != null) {
-  //   //   final distanceToStart =
-  //   //       Line(game.world.player.position, collision.start).length2;
-  //   //   final distanceToEnd =
-  //   //       Line(game.world.player.position, collision.end).length2;
-  //   //   if (distanceToStart < distanceToEnd) {
-  //   //     pathToPlayer = Line(position, collision.start).extend(1.5);
-  //   //   } else {
-  //   //     pathToPlayer = Line(position, collision.end).extend(1.5);
-  //   //   }
-  //   // }
-
-  //   final movement = pathToPlayer.vector2.normalized();
-  //   applyMovement(applyLurch(movement));
-  // }
-
-  void applyMovement(Vector2 movement) {
-    final originalPosition = position.clone();
-    Vector2 movementThisFrame = movement * speed;
-
-    // Fake update the position so our anchor calculations take into account
-    // what movement we want to do this turn.
-    position.add(movementThisFrame);
-
-    // movementThisFrame = checkMovement(
-    //   movementThisFrame: movementThisFrame,
-    //   predicate: isUnwalkableTerrain,
-    // );
-    // movementThisFrame = checkMovement(
-    //   movementThisFrame: movementThisFrame,
-    //   predicate: isZombie,
-    //   debug: debug,
-    // );
-    position = originalPosition..add(movementThisFrame);
-    checkOutOfBounds();
-  }
-
-  Line? _getUnwalkableCollision(Line pathToPlayer) {
-    Vector2? nearestIntersection;
-    double? shortestLength;
-    Line? unwalkableBoundary;
-    for (final line in game.world.unwalkableComponentEdges) {
-      Vector2? intersection = pathToPlayer.intersectsAt(line);
-      if (intersection != null) {
-        if (nearestIntersection == null) {
-          nearestIntersection = intersection;
-          shortestLength = Line(position, intersection).length2;
-          unwalkableBoundary = line;
-        } else {
-          final lengthToThisPoint = Line(position, intersection).length2;
-          if (lengthToThisPoint < shortestLength!) {
-            shortestLength = lengthToThisPoint;
-            nearestIntersection = intersection;
-            unwalkableBoundary = line;
-          }
-        }
-      }
-    }
-    return unwalkableBoundary;
   }
 }

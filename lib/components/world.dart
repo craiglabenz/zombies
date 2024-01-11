@@ -56,14 +56,14 @@ class ZombieWorld extends World
       add(UnwalkableComponent(vertices));
     }
 
-    // for (final line in unwalkableComponentEdges) {
-    //   add(LineComponent.red(line: line, thickness: 3));
-    // }
+    for (final line in unwalkableComponentEdges) {
+      add(LineComponent.red(line: line, thickness: 3));
+    }
 
     player = Player();
     addAll([map, player]);
 
-    int zombiesToAdd = 1;
+    int zombiesToAdd = 100;
     int counter = 0;
     while (counter < zombiesToAdd) {
       final x = rnd.nextInt(8) + 1;
@@ -94,5 +94,18 @@ class ZombieWorld extends World
         size.y - gameSize.y / 2,
       ),
     );
+  }
+
+  bool isPaused = false;
+  bool isPausing = false;
+
+  @override
+  void updateTree(double dt) {
+    if (!isPaused) {
+      super.updateTree(0.016667);
+      if (isPausing) {
+        isPaused = true;
+      }
+    }
   }
 }
