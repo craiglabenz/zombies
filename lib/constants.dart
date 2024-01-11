@@ -7,3 +7,11 @@ class Priority {
   static const int pathFinding = 2;
   static const int movement = 3;
 }
+
+class RenderingPriority {
+  static const int ground = 1;
+  static const int object = 1;
+  static const int zombie = 2;
+  static const int player = 3;
+  static const int effect = 4;
+}

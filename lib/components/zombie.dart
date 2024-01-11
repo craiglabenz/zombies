@@ -19,12 +19,17 @@ class Zombie extends PositionedEntity
     required super.position,
     this.speed = worldTileSize * 2,
     this.debug = false,
+    this.health = 100,
   }) : super(
           size: Vector2.all(64),
           anchor: Anchor.center,
-          priority: 1,
+          priority: RenderingPriority.zombie,
           children: [CircleHitbox.relative(0.8, parentSize: Vector2.all(64))],
-          behaviors: [GoalControllingBehavior(), ZombieMovingBehavior()],
+          behaviors: [
+            GoalControllingBehavior(),
+            ZombieMovingBehavior(),
+            DyingBehavior(),
+          ],
         );
 
   late ZombieGoalState goalState;
@@ -33,11 +38,13 @@ class Zombie extends PositionedEntity
   LineComponent? visualizedPathToPlayer;
   LineComponent? visualizedPathToCollision;
   bool debug;
+  int health;
 
   Random rnd = Random();
 
   late SpriteAnimationComponent walkingAnimation;
   late SpriteComponent idleComponent;
+  late LifebarComponent lifebar;
 
   late PathFindingBehavior pathFinding;
 
@@ -86,11 +93,18 @@ class Zombie extends PositionedEntity
       size: Vector2.all(64.0),
     );
     add(idleComponent);
+
+    lifebar = LifebarComponent();
+    add(lifebar);
   }
 
   @override
   void onCollision(Set<Vector2> intersectionPoints, PositionComponent other) {
     super.onCollision(intersectionPoints, other);
+    if (other is Fireball) {
+      findBehavior<DyingBehavior>().takeDamage(other);
+      return;
+    }
     findBehavior<ZombieMovingBehavior>().undoCollisions(
       other: other,
       intersectionPoints: intersectionPoints,
@@ -114,6 +128,47 @@ class Zombie extends PositionedEntity
     if (!hasBehavior<ChasingBehavior>()) {
       pathFinding = ChasingBehavior();
       add(pathFinding);
+    }
+  }
+
+  void clean() {
+    (parent as ZombieWorld).remove(this);
+  }
+}
+
+class LifebarComponent extends PositionComponent {
+  late LineComponent healthBar;
+
+  Zombie get zombie => parent as Zombie;
+
+  bool healthBarShowing = false;
+
+  @override
+  void onLoad() {
+    healthBar = LineComponent.red(
+      line: Line(
+        zombie.positionOfAnchor(Anchor.topLeft),
+        zombie.positionOfAnchor(Anchor.topRight),
+      ),
+    );
+  }
+
+  @override
+  void update(double dt) {
+    if (zombie.health < 100) {
+      if (!healthBarShowing) {
+        zombie.add(healthBar);
+        healthBarShowing = true;
+      }
+      final topLeft = zombie.positionOfAnchor(Anchor.topLeft);
+      final topRight = zombie.positionOfAnchor(Anchor.topRight);
+      healthBar.line = Line(
+        topLeft,
+        Vector2(
+          topLeft.x + ((topRight.x - topLeft.x) * (zombie.health / 100)),
+          topRight.y,
+        ),
+      );
     }
   }
 }

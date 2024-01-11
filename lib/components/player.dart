@@ -2,6 +2,7 @@ import 'package:flame/collisions.dart';
 import 'package:flame/components.dart';
 import 'package:flutter/services.dart';
 import 'package:zombies/assets.dart';
+import 'package:zombies/components/components.dart';
 import 'package:zombies/utilities/utilities.dart';
 import 'package:zombies/constants.dart';
 import 'package:zombies/zombie_game.dart';
@@ -17,7 +18,7 @@ class Player extends PositionComponent
           anchor: Anchor.center,
           children: [RectangleHitbox()],
           position: Vector2(worldTileSize * 9.6, worldTileSize * 2.5),
-          priority: 1,
+          priority: RenderingPriority.player,
           size: Vector2.all(64),
         ) {
     halfSize = size / 2;
@@ -151,5 +152,14 @@ class Player extends PositionComponent
       return false;
     }
     return true;
+  }
+
+  void castFireball(Vector2 target) {
+    game.world.add(
+      Fireball(
+        origin: position,
+        target: target,
+      ),
+    );
   }
 }

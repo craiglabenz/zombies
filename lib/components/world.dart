@@ -1,6 +1,7 @@
 import 'dart:math';
 
 import 'package:flame/components.dart';
+import 'package:flame/events.dart';
 import 'package:flame/experimental.dart';
 import 'package:flame_tiled/flame_tiled.dart';
 import 'package:zombies/components/components.dart';
@@ -10,7 +11,7 @@ import '../zombie_game.dart';
 import '../../constants.dart';
 
 class ZombieWorld extends World
-    with HasGameRef<ZombieGame>, HasCollisionDetection {
+    with HasGameRef<ZombieGame>, HasCollisionDetection, TapCallbacks {
   ZombieWorld({super.children});
 
   late Vector2 size = Vector2(
@@ -63,7 +64,7 @@ class ZombieWorld extends World
     player = Player();
     addAll([map, player]);
 
-    int zombiesToAdd = 100;
+    int zombiesToAdd = 20;
     int counter = 0;
     while (counter < zombiesToAdd) {
       final x = rnd.nextInt(8) + 1;
@@ -107,5 +108,10 @@ class ZombieWorld extends World
         isPaused = true;
       }
     }
+  }
+
+  @override
+  void onTapUp(TapUpEvent event) {
+    player.castFireball(event.localPosition);
   }
 }
