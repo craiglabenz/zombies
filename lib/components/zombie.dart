@@ -2,7 +2,6 @@ import 'dart:math';
 
 import 'package:flame/collisions.dart';
 import 'package:flame/components.dart';
-import 'package:flame_behaviors/flame_behaviors.dart';
 import 'package:zombies/assets.dart';
 import 'package:zombies/behaviors/behaviors.dart';
 import 'package:zombies/components/components.dart';
@@ -10,21 +9,21 @@ import 'package:zombies/constants.dart';
 import 'package:zombies/utilities/utilities.dart';
 import 'package:zombies/zombie_game.dart';
 
-class Zombie extends PositionedEntity
+class Zombie extends MovableActor
     with
         HasGameReference<ZombieGame>,
         UnwalkableTerrainChecker,
         CollisionCallbacks {
   Zombie({
     required super.position,
-    this.speed = worldTileSize * 2,
+    super.speed = worldTileSize * 2,
     this.debug = false,
     this.health = 100,
   }) : super(
           size: Vector2.all(64),
           anchor: Anchor.center,
           priority: RenderingPriority.zombie,
-          children: [CircleHitbox.relative(0.8, parentSize: Vector2.all(64))],
+          children: [RectangleHitbox()],
           behaviors: [
             GoalControllingBehavior(),
             ZombieMovingBehavior(),
@@ -34,7 +33,6 @@ class Zombie extends PositionedEntity
 
   late ZombieGoalState goalState;
 
-  double speed;
   LineComponent? visualizedPathToPlayer;
   LineComponent? visualizedPathToCollision;
   bool debug;
@@ -47,6 +45,9 @@ class Zombie extends PositionedEntity
   late LifebarComponent lifebar;
 
   late PathFindingBehavior pathFinding;
+
+  @override
+  Vector2 get movementToMake => pathFinding.movementToMake;
 
   static const defaultWalkingStepTime = 0.3;
 
@@ -105,7 +106,7 @@ class Zombie extends PositionedEntity
       findBehavior<DyingBehavior>().takeDamage(other);
       return;
     }
-    findBehavior<ZombieMovingBehavior>().undoCollisions(
+    findBehavior<ZombieMovingBehavior>().queueCollision(
       other: other,
       intersectionPoints: intersectionPoints,
     );

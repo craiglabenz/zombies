@@ -72,7 +72,10 @@ class Line extends Equatable {
     return deg;
   }
 
-  Direction get direction => angleDeg.angleDirection;
+  bool get isLeft => dx < 0;
+  bool get isRight => dx > 0;
+  bool get isUp => dy < 0;
+  bool get isDown => dy > 0;
 
   Line copy() => Line.doubles(start.x, start.y, end.x, end.y);
 
@@ -97,21 +100,9 @@ class Line extends Equatable {
 
 enum Direction { up, down, left, right }
 
-extension DirectionDouble on double {
-  Direction get angleDirection {
-    // 0° is straight to the right, not up, like feels easier to reason about.
-    // So, add 90° from the value to convert from actural coordinates to
-    // "natural" (to me) coordinates.
-    double natural = this + 90;
-
-    // Now compute.
-    if (natural > 45.0 && natural <= 135.0) {
-      return Direction.right;
-    } else if (natural > 135.0 && natural <= 225.0) {
-      return Direction.down;
-    } else if (natural > 225.0 && natural <= 315.0) {
-      return Direction.left;
-    }
-    return Direction.up;
-  }
+extension DirectionVector on Vector2 {
+  bool get isLeft => x < 0;
+  bool get isRight => x > 0;
+  bool get isUp => y < 0;
+  bool get isDown => y > 0;
 }

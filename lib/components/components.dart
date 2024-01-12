@@ -2,6 +2,7 @@ export 'colored_box.dart';
 export 'fireball.dart';
 export 'land.dart';
 export 'line_component.dart';
+export 'movable_actor.dart';
 export 'player.dart';
 export 'unwalkable_component.dart';
 export 'world.dart';
