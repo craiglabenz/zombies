@@ -11,7 +11,7 @@ class Priority {
 class RenderingPriority {
   static const int ground = 1;
   static const int object = 1;
-  static const int zombie = 2;
-  static const int player = 3;
+  static const int player = 2;
+  static const int zombie = 3;
   static const int effect = 4;
 }

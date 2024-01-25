@@ -1,16 +1,23 @@
 import 'dart:collection';
 import 'package:flame/components.dart';
 import 'package:flame_behaviors/flame_behaviors.dart';
+import 'package:logging/logging.dart';
 import 'package:zombies/components/components.dart';
 import 'package:zombies/constants.dart';
 import 'package:zombies/utilities/utilities.dart';
 import 'package:zombies/zombie_game.dart';
 
-abstract class BaseMovingBehavior<T extends MovableActor> extends Behavior<T>
+final _log = Logger('MovingBehavior');
+
+class MovingBehavior<T extends MovableActor> extends Behavior<T>
     with HasGameRef<ZombieGame> {
-  BaseMovingBehavior() {
+  MovingBehavior({required this.unwalkableComponentChecker}) {
     priority = Priority.pathFinding;
   }
+
+  /// Function which evaluates whether this [actor] can share space with the
+  /// given [Component].
+  final bool Function(Component) unwalkableComponentChecker;
 
   final Queue<(Component, Set<Vector2>)> _queuedCollisions = Queue();
 
@@ -52,37 +59,53 @@ abstract class BaseMovingBehavior<T extends MovableActor> extends Behavior<T>
   }
 
   /// Handles any collisions registered via [queueCollisions].
-  void processCollisions();
-}
-
-class ZombieMovingBehavior extends BaseMovingBehavior<Zombie> {
-  ZombieMovingBehavior() {
-    priority = Priority.pathFinding;
-  }
-
-  @override
   void processCollisions() {
     while (_queuedCollisions.isNotEmpty) {
       final (Component other, Set<Vector2> intersectionPoints) =
           _queuedCollisions.removeFirst();
-      if (other is! Zombie && other is! UnwalkableComponent) {
+      if (!unwalkableComponentChecker(other)) {
         return;
       }
-      final lineToCollision = Line(
-        _originalPosition,
-        intersectionPoints.average(),
-      );
 
-      if (lineToCollision.isUp && _cachedMovementThisFrame.isUp) {
+      final average = intersectionPoints.average();
+      _log.finest('[${parent.runtimeType}] Colliding with $average');
+      final lineToCollision = Line(_originalPosition, average);
+
+      final collisionOnTop =
+          other.containsPoint(parent.positionOfAnchor(Anchor.topCenter));
+      final collisionOnBottom =
+          other.containsPoint(parent.positionOfAnchor(Anchor.bottomCenter));
+      final collisionOnLeft =
+          other.containsPoint(parent.positionOfAnchor(Anchor.centerLeft));
+      final collisionOnRight =
+          other.containsPoint(parent.positionOfAnchor(Anchor.centerRight));
+
+      if (_cachedMovementThisFrame.isUp && collisionOnTop) {
+        _log.fine(
+          '[${parent.runtimeType}] Undoing UP portion of movement - '
+          'resetting Y to ${_originalPosition.y}',
+        );
         parent.position.y = _originalPosition.y;
       }
-      if (lineToCollision.isDown && _cachedMovementThisFrame.isDown) {
+      if (_cachedMovementThisFrame.isDown && collisionOnBottom) {
+        _log.fine(
+          '[${parent.runtimeType}] Undoing DOWN portion of movement - '
+          'resetting Y to ${_originalPosition.y}',
+        );
         parent.position.y = _originalPosition.y;
       }
-      if (lineToCollision.isLeft && _cachedMovementThisFrame.isLeft) {
+      if (_cachedMovementThisFrame.isLeft && collisionOnLeft) {
+        _log.fine(
+          '[${parent.runtimeType}] Undoing LEFT portion of movement - '
+          'resetting X to ${_originalPosition.x}',
+        );
         parent.position.x = _originalPosition.x;
       }
-      if (lineToCollision.isRight && _cachedMovementThisFrame.isRight) {
+      if (_cachedMovementThisFrame.isRight && collisionOnRight) {
+        _log.fine(
+          '[${parent.runtimeType}] Undoing RIGHT portion of movement - '
+          'resetting X to ${_originalPosition.x}',
+        );
         parent.position.x = _originalPosition.x;
       }
     }

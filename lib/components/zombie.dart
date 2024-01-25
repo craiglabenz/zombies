@@ -10,10 +10,7 @@ import 'package:zombies/utilities/utilities.dart';
 import 'package:zombies/zombie_game.dart';
 
 class Zombie extends MovableActor
-    with
-        HasGameReference<ZombieGame>,
-        UnwalkableTerrainChecker,
-        CollisionCallbacks {
+    with HasGameReference<ZombieGame>, UnwalkableTerrainChecker {
   Zombie({
     required super.position,
     super.speed = worldTileSize * 2,
@@ -23,10 +20,15 @@ class Zombie extends MovableActor
           size: Vector2.all(64),
           anchor: Anchor.center,
           priority: RenderingPriority.zombie,
-          children: [RectangleHitbox()],
+          children: [
+            RectangleHitbox.relative(Vector2(0.9, 0.9),
+                parentSize: Vector2.all(64)),
+          ],
           behaviors: [
             GoalControllingBehavior(),
-            ZombieMovingBehavior(),
+            MovingBehavior(
+                unwalkableComponentChecker: (Component other) =>
+                    other is Zombie || other is UnwalkableComponent),
             DyingBehavior(),
           ],
         );
@@ -106,10 +108,6 @@ class Zombie extends MovableActor
       findBehavior<DyingBehavior>().takeDamage(other);
       return;
     }
-    findBehavior<ZombieMovingBehavior>().queueCollision(
-      other: other,
-      intersectionPoints: intersectionPoints,
-    );
   }
 
   void setStateToWandering() {
