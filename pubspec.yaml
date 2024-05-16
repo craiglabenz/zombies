@@ -14,6 +14,7 @@ dependencies:
   flame_tiled: ^1.13.0
   flutter:
     sdk: flutter
+  logging: ^1.2.0
   vector_math: ^2.1.4
 
 dev_dependencies:

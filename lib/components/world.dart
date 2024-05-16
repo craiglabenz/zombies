@@ -64,7 +64,7 @@ class ZombieWorld extends World
     player = Player();
     addAll([map, player]);
 
-    int zombiesToAdd = 20;
+    int zombiesToAdd = 50;
     int counter = 0;
     while (counter < zombiesToAdd) {
       final x = rnd.nextInt(8) + 1;
