@@ -5,14 +5,16 @@ publish_to: "none"
 version: 1.0.0+1
 
 environment:
-  sdk: ">=3.1.0-333.0.dev <4.0.0"
+  sdk: ">=3.3.0-170.0.dev <4.0.0"
 
 dependencies:
   equatable: ^2.0.5
-  flame: ^1.8.1
+  flame: ^1.13.0
+  flame_behaviors: ^1.0.0
   flame_tiled: ^1.13.0
   flutter:
     sdk: flutter
+  logging: ^1.2.0
   vector_math: ^2.1.4
 
 dev_dependencies:
@@ -36,3 +38,4 @@ flutter:
     - assets/characters/Zombie/Poses/
     - assets/dungeon/
     - assets/town/
+    - assets/Fireball1.png

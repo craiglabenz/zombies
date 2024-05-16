@@ -1,5 +1,4 @@
 import 'package:flame/components.dart';
-import 'package:flame/experimental.dart';
 import 'package:flutter/material.dart';
 import 'package:zombies/components/components.dart';
 import 'package:zombies/utilities/utilities.dart';
@@ -11,6 +10,7 @@ class LineComponent extends CustomPainterComponent
     required this.line,
     bool? debug = false,
     double? thickness = 1,
+    int? priority,
     this.color = const Color(0xFF000000),
   })  : assert(debug != null),
         assert(thickness != null),
@@ -19,7 +19,7 @@ class LineComponent extends CustomPainterComponent
         super(
           anchor: Anchor.center,
           position: line.start,
-          priority: 3,
+          priority: priority ?? 3,
           size: Vector2(line.length, 1),
         );
 
@@ -57,6 +57,7 @@ class LineComponent extends CustomPainterComponent
         color: const Color(0xFF0000FF),
         debug: debug,
         thickness: thickness,
+        priority: 99,
       );
 
   Line line;
@@ -77,7 +78,7 @@ class LineComponent extends CustomPainterComponent
       angle: line.angle,
       paint: Paint()..color = color,
       position: positionOfAnchor(anchor),
-      priority: 3,
+      priority: priority,
     );
     game.world.add(child);
 
@@ -120,6 +121,9 @@ class LineComponent extends CustomPainterComponent
   void renderDebugMode(Canvas canvas) {
     return;
   }
+
+  @override
+  String toString() => 'LineComponent(line: $line)';
 }
 
 class _LineRectComponent extends RectangleComponent {

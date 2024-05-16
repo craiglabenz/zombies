@@ -2,6 +2,7 @@ import 'dart:math';
 import 'package:equatable/equatable.dart';
 import 'package:vector_math/vector_math_64.dart';
 
+// ignore: must_be_immutable
 class Line extends Equatable {
   Line(this.start, this.end);
 
@@ -12,6 +13,12 @@ class Line extends Equatable {
     double endY,
   ) =>
       Line(Vector2(startX, startY), Vector2(endX, endY));
+
+  factory Line.fromPosition({
+    required Vector2 startingPosition,
+    required Vector2 delta,
+  }) =>
+      Line(startingPosition, startingPosition + delta);
 
   final Vector2 start;
   final Vector2 end;
@@ -57,7 +64,18 @@ class Line extends Equatable {
   }
 
   double get angle => atan2(dy, dx);
-  double get angleDeg => angle * radians2Degrees;
+  double get angleDeg {
+    double deg = angle * radians2Degrees;
+    while (deg < 0) {
+      deg += 360;
+    }
+    return deg;
+  }
+
+  bool get isLeft => dx < 0;
+  bool get isRight => dx > 0;
+  bool get isUp => dy < 0;
+  bool get isDown => dy > 0;
 
   Line copy() => Line.doubles(start.x, start.y, end.x, end.y);
 
@@ -78,4 +96,13 @@ class Line extends Equatable {
     }
     return null;
   }
+}
+
+enum Direction { up, down, left, right }
+
+extension DirectionVector on Vector2 {
+  bool get isLeft => x < 0;
+  bool get isRight => x > 0;
+  bool get isUp => y < 0;
+  bool get isDown => y > 0;
 }

@@ -1,6 +1,7 @@
 import 'dart:math';
 
 import 'package:flame/components.dart';
+import 'package:flame/events.dart';
 import 'package:flame/experimental.dart';
 import 'package:flame_tiled/flame_tiled.dart';
 import 'package:zombies/components/components.dart';
@@ -9,7 +10,8 @@ import 'package:zombies/utilities/utilities.dart';
 import '../zombie_game.dart';
 import '../../constants.dart';
 
-class ZombieWorld extends World with HasGameRef<ZombieGame> {
+class ZombieWorld extends World
+    with HasGameRef<ZombieGame>, HasCollisionDetection, TapCallbacks {
   ZombieWorld({super.children});
 
   late Vector2 size = Vector2(
@@ -59,17 +61,14 @@ class ZombieWorld extends World with HasGameRef<ZombieGame> {
       add(LineComponent.red(line: line, thickness: 3));
     }
 
-    zombie = Zombie(
-      position: Vector2(worldTileSize * 14.6, worldTileSize * 6.5),
-    );
     player = Player();
-    addAll([map, player, zombie]);
+    addAll([map, player]);
 
-    int zombiesToAdd = 15;
+    int zombiesToAdd = 50;
     int counter = 0;
     while (counter < zombiesToAdd) {
-      final x = rnd.nextInt(20) + 1;
-      final y = rnd.nextInt(20) + 1;
+      final x = rnd.nextInt(8) + 1;
+      final y = rnd.nextInt(8) + 1;
       add(Zombie(
         position: Vector2(worldTileSize * x, worldTileSize * y),
       ));
@@ -78,6 +77,7 @@ class ZombieWorld extends World with HasGameRef<ZombieGame> {
 
     // Set up Camera
     gameRef.cameraComponent.follow(player);
+    gameRef.cameraComponent.viewport.add(FpsTextComponent());
   }
 
   @override
@@ -95,5 +95,23 @@ class ZombieWorld extends World with HasGameRef<ZombieGame> {
         size.y - gameSize.y / 2,
       ),
     );
+  }
+
+  bool isPaused = false;
+  bool isPausing = false;
+
+  @override
+  void updateTree(double dt) {
+    if (!isPaused) {
+      super.updateTree(0.016667);
+      if (isPausing) {
+        isPaused = true;
+      }
+    }
+  }
+
+  @override
+  void onTapUp(TapUpEvent event) {
+    player.castFireball(event.localPosition);
   }
 }
